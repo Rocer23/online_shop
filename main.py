@@ -1,5 +1,6 @@
+import datetime
 import sqlite3
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 
 app = FastAPI()
 
@@ -55,3 +56,22 @@ def add_customer(first_name: str, last_name: str, email: str):
                        [first_name, last_name, email])
         conn.commit()
         return {"first_name": first_name, "last_name": last_name, "email": email}
+
+
+@app.put('/order/')
+def create_order(customer_id: int, product_id: int, quantity: int, order_date: str):
+    try:
+        order_date_parsed = datetime.datetime.strptime(order_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid order date")
+
+    with sqlite3.connect("data.db") as conn:
+        cursor = conn.cursor()
+        cursor.execute("INSERT into orders (customer_id, product_id, quantity, order_date) VALUES (?, ?, ?, ?)",
+                       [customer_id, product_id, quantity, order_date_parsed])
+        conn.commit()
+        return {"customer_id": customer_id,
+                "product_id": product_id,
+                "quantity": quantity,
+                "order_date": str(order_date_parsed)
+                }
