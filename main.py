@@ -81,7 +81,6 @@ def create_order(customer_id: int, product_id: int, quantity: int, order_date: s
 def show_order():
     with sqlite3.connect('data.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('''SELECT name, first_name, last_name, quantity, price, order_date 
-                        FROM products, customers, orders''')
+        cursor.execute('''SELECT * FROM orders''')
         order = cursor.fetchone()
         return {"order": order}
