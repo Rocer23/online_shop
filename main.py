@@ -39,7 +39,7 @@ def init_db():
 init_db()
 
 
-@app.put('/product/')
+@app.put('/products/')
 def create_product(name: str, category: str, price: int):
     with sqlite3.connect("data.db") as conn:
         cursor = conn.cursor()
@@ -77,10 +77,88 @@ def create_order(customer_id: int, product_id: int, quantity: int, order_date: s
                 }
 
 
-@app.get('/order/')
-def show_order():
+@app.get('/orders/')
+def show_all_orders():
     with sqlite3.connect('data.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('''SELECT * FROM orders''')
-        order = cursor.fetchone()
-        return {"order": order}
+        cursor.execute('''
+            SELECT o.order_id, c.first_name, c.last_name, p.name, p.category, p.price, o.quantity, o.order_date 
+            FROM orders o 
+            JOIN customers c ON o.customer_id = c.customer_id 
+            JOIN products p ON o.product_id = p.product_id
+            ''')
+        orders = cursor.fetchall()
+
+        if not orders:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Orders not found")
+
+        all_orders = [
+            {
+                "order_id": row[0],
+                "customer_id": {
+                    "first_name": row[1],
+                    "last_name": row[2]
+                },
+                "product": {
+                    "name": row[3],
+                    "category": row[4],
+                    "price": row[5]
+                },
+                "quantity": row[6],
+                "order_date": row[7]
+            } for row in orders
+        ]
+        return all_orders
+
+
+@app.get("/products/")
+def get_all_products():
+    with sqlite3.connect('data.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM products")
+        products = cursor.fetchall()
+
+        all_products = [{'product_id': row[0], 'name': row[1], 'category': row[2], 'price': row[3]} for row in products]
+
+        if not all_products:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Products not found")
+
+        return all_products
+
+
+@app.get("/customers/")
+def get_all_customers():
+    with sqlite3.connect('data.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM customers")
+        customers = cursor.fetchall()
+
+        all_customers = [{'customer_id': row[0], 'first_name': row[1], "last_name": row[2], "email": row[3]}
+                         for row in customers]
+
+        if not all_customers:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customers not found")
+
+        return all_customers
+
+
+@app.get("/customer/")
+def get_customer_by_id(customer_id: str):
+    with sqlite3.connect('data.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM customers WHERE customer_id = ?", [customer_id])
+        customer = cursor.fetchone()
+
+        if not customer:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+
+        return {"customer_id": customer[0], "first_name": customer[1], "last_name": customer[2], "email": customer[3]}
+
+
+@app.delete('/products/')
+def delete_product(product_id):
+    with sqlite3.connect('data.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('''DELETE FROM products WHERE product_id = ?''', [product_id])
+        conn.commit()
+        return {'message': "Product deleted successfully"}
