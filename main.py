@@ -39,7 +39,7 @@ def init_db():
 init_db()
 
 
-@app.put('/products/')
+@app.post('/products/')
 def create_product(name: str, category: str, price: int):
     with sqlite3.connect("data.db") as conn:
         cursor = conn.cursor()
@@ -48,7 +48,7 @@ def create_product(name: str, category: str, price: int):
         return {'name': name, "category": category, "price": price}
 
 
-@app.put('/customers/')
+@app.post('/customers/')
 def add_customer(first_name: str, last_name: str, email: str):
     with sqlite3.connect("data.db") as conn:
         cursor = conn.cursor()
@@ -58,7 +58,7 @@ def add_customer(first_name: str, last_name: str, email: str):
         return {"first_name": first_name, "last_name": last_name, "email": email}
 
 
-@app.put('/order/')
+@app.post('/order/')
 def create_order(customer_id: int, product_id: int, quantity: int, order_date: str):
     try:
         order_date_parsed = datetime.datetime.strptime(order_date, "%Y-%m-%d").date()
