@@ -1,6 +1,7 @@
 import datetime
 import sqlite3
 from fastapi import FastAPI, HTTPException, status
+import uvicorn
 
 app = FastAPI()
 
@@ -162,3 +163,7 @@ def delete_product(product_id):
         cursor.execute('''DELETE FROM products WHERE product_id = ?''', [product_id])
         conn.commit()
         return {'message': "Product deleted successfully"}
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
